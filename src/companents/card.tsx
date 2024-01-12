@@ -1,4 +1,5 @@
-import { FC, useState } from "react";
+import { FC, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { IData } from "../data/data";
 import Savatcha from "./icons";
 import ModalContext from "./modal";
@@ -7,12 +8,21 @@ interface PropsCard {
     item: IData;
 }
 const CardContext: FC<PropsCard> = ({ item }) => {
+    const [open, setOpen] = useState(false);
 
-    const [open,setOpen] = useState(false)
+    let newPrice = useMemo(() => {
+        return Math.floor(
+            Number(item.type[0].price) -
+                (Number(item.type[0].price) * item.type[0].aksiya) / 100
+        );
+    }, [item]);
 
     const handlyOpenModal = () => {
-        setOpen(true)
-    }
+        setOpen(true);
+    };
+    const handlyCancel = () => {
+        setOpen(false);
+    };
     return (
         <>
             <div className='w-96 p-3 rounded-xl'>
@@ -28,13 +38,8 @@ const CardContext: FC<PropsCard> = ({ item }) => {
                     <p className=''>
                         <del>{item.type[0].price}</del>
                     </p>
-                    <div className="flex justify-between">
-                        <p>
-                            {Number(item.type[0].price) -
-                                (Number(item.type[0].price) *
-                                    item.type[0].aksiya) /
-                                    100}
-                        </p>
+                    <div className='flex justify-between'>
+                        <p>{newPrice}</p>
                         <button onClick={handlyOpenModal}>
                             <Savatcha />
                         </button>
@@ -42,9 +47,14 @@ const CardContext: FC<PropsCard> = ({ item }) => {
                 </div>
             </div>
 
-            {
-                open && <ModalContext/>
-            }
+            {open &&
+                createPortal(
+                    <ModalContext
+                        item={item}
+                        onCancel={handlyCancel}
+                    />,
+                    document.body
+                )}
         </>
     );
 };
